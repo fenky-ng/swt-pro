@@ -102,7 +102,6 @@ func Test_comparePasswords(t *testing.T) {
 }
 
 func Test_generateJwtToken(t *testing.T) {
-	getSignKey("../key/jwtRS256.key") // init signKey for test
 	type args struct {
 		user repository.User
 	}
@@ -138,8 +137,6 @@ func Test_generateJwtToken(t *testing.T) {
 }
 
 func Test_getSessionClaims(t *testing.T) {
-	getSignKey("../key/jwtRS256.key")       // init signKey for test
-	getVerifyKey("../key/jwtRS256.key.pub") // init verifyKey for test
 	type args struct {
 		ctx echo.Context
 	}

@@ -3,7 +3,6 @@ package handler
 import (
 	"crypto/rsa"
 	"errors"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -22,52 +21,26 @@ var (
 	verifyKey *rsa.PublicKey
 )
 
-func getPrivateKey(filepath string) *rsa.PrivateKey {
-	bytes, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		panic(err)
-	}
-
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	return key
-}
-
-func getPublicKey(filepath string) *rsa.PublicKey {
-	bytes, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		panic(err)
-	}
-
-	key, err := jwt.ParseRSAPublicKeyFromPEM(bytes)
-	if err != nil {
-		panic(err)
-	}
-
-	return key
-}
-
-func getSignKey(customPrivateKeyPath string) *rsa.PrivateKey {
+func getSignKey() *rsa.PrivateKey {
 	if signKey == nil {
-		privateKeyPath := constant.PrivateKeyPath
-		if customPrivateKeyPath != "" {
-			privateKeyPath = customPrivateKeyPath
+		key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(constant.PrivateRSA))
+		if err != nil {
+			log.Errorf("ParseRSAPrivateKeyFromPEM error: %s", err.Error())
+			panic(err)
 		}
-		signKey = getPrivateKey(privateKeyPath)
+		signKey = key
 	}
 	return signKey
 }
 
-func getVerifyKey(customPublicKeyPath string) *rsa.PublicKey {
+func getVerifyKey() *rsa.PublicKey {
 	if verifyKey == nil {
-		publicKeyPath := constant.PublicKeyPath
-		if customPublicKeyPath != "" {
-			publicKeyPath = customPublicKeyPath
+		key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(constant.PublicRSA))
+		if err != nil {
+			log.Errorf("ParseRSAPublicKeyFromPEM error: %s", err.Error())
+			panic(err)
 		}
-		verifyKey = getPublicKey(publicKeyPath)
+		verifyKey = key
 	}
 	return verifyKey
 }
@@ -101,7 +74,7 @@ func generateJwtToken(user repository.User) (signedToken string, err error) {
 		PhoneNumber: user.PhoneNumber,
 	}
 
-	return t.SignedString(getSignKey(""))
+	return t.SignedString(getSignKey())
 }
 
 func getSessionClaims(ctx echo.Context) (sc model.SessionClaims, err error) {
@@ -113,7 +86,7 @@ func getSessionClaims(ctx echo.Context) (sc model.SessionClaims, err error) {
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, &model.SessionClaims{}, func(*jwt.Token) (interface{}, error) {
-		return getVerifyKey(""), nil
+		return getVerifyKey(), nil
 	})
 	if err != nil {
 		if strings.HasPrefix(err.Error(), jwt.ErrTokenExpired.Error()) {
