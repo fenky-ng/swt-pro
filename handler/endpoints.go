@@ -217,7 +217,7 @@ func (s *Server) UpdateProfile(ctx echo.Context) error {
 		}
 		if user.ID != 0 && user.ID != sessionClaims.UserID {
 			response.Header = generateResponseHeader(constant.ErrorCodeValidation, []string{"Phone number is already registered"}, false)
-			return ctx.JSON(http.StatusForbidden, response)
+			return ctx.JSON(http.StatusConflict, response)
 		}
 
 		changesCount++
